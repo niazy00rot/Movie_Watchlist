@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+
+        .stage {
+            background: #2a2a40;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .user {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: #3a3a55;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .user:hover {
+            transform: scale(1.02);
+        }
+
+        .rank {
+            font-weight: bold;
+            width: 30px;
+            text-align: center;
+        }
+
+        .me {
+            background: #6c63ff;
+        }
+
+        .actions {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        #scoreInput {
+            width: 120px;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 16px;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            background: #6c63ff;
+            color: #fff;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background: #574fe0;
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 500px) {
+            .actions {
+                flex-direction: column;
+            }
+
+            #scoreInput {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏆 Leaderboard</h1>
+
+    <div class="stage" id="leaderboard"></div>
+
+    <div class="actions">
+        <input 
+            type="number" 
+            id="scoreInput" 
+            placeholder="Enter points"
+            min="1"
+        />
+        <button onclick="increaseScore()">+ Increase My Score</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        git_players_data()
+    })
+
+    async function git_players_data() {
+        try {
+            const res = await fetch('/stage/leaderboard')
+            const data = await res.json()
+            const leaderboard = document.getElementById('leaderboard')
+            leaderboard.innerHTML = ''
+            data.forEach((user, index) => {
+                const userDiv = document.createElement('div')
+                userDiv.classList.add('user')
+                if(user.isMe) userDiv.classList.add('me')
+
+                userDiv.innerHTML = `
+                    <div class="rank">${index + 1}</div>
+                    <div>${user.username}</div>
+                    <div>${user.score} pts</div>
+                `
+                leaderboard.appendChild(userDiv)
+            })
+        } catch(err) {
+            console.error('Error fetching leaderboard:', err)
+        }
+    }
+
+    async function increaseScore() {
+        const scoreInput = document.getElementById('scoreInput')
+        const points = parseInt(scoreInput.value)
+
+        if(isNaN(points) || points <= 0) {
+            alert('Please enter a valid number of points.')
+            return
+        }
+
+        try {
+            const token = localStorage.getItem('token')
+            if(!token) {
+                alert('Please login first.')
+                return
+            }
+
+
+            const res = await fetch('/stage/update-score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ score: points, token: token })
+            })
+
+            if (!res.ok) {
+                const msg = await res.text()
+                throw new Error(msg)
+            }
+
+        } catch(err) {
+            console.error('Error increasing score:', err)
+        }
+
+        scoreInput.value = ''
+        git_players_data()
+    }
+</script>
+
+</body>
+</html>
