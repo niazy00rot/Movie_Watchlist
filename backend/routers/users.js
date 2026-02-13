@@ -18,7 +18,7 @@ router.post('/login', async (req,res)=>{
     const{username,password}=req.body
     try{
         const data = await Login(username,password)
-        const token=jwt.sign({id:data[0].id,username:data[0].username},process.env.JWT_SECRET,'secretkey',{expiresIn:'1h'})
+        const token=jwt.sign({id:data[0].id,username:data[0].username},process.env.JWT_SECRET,{expiresIn:'1h'})
    res.status(200).json({token,username:data[0].username})
     }
     catch(err){
