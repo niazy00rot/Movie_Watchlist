@@ -109,8 +109,7 @@
 
                 const res = await fetch('/movies/loved', {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token }) // حسب تصميم الباك
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 })
 
                 const data = await res.json()
@@ -132,12 +131,11 @@
                 data.forEach((movie, index) => {
                     const div = document.createElement('div')
                     div.classList.add('movie')
-
                     div.innerHTML = `
                 <div class="rank">#${index + 1}</div>
                 <div>${movie.name || 'No Title'}</div>
                 <div>${movie.h + ':' + movie.m}</div>
-                <button onclick="addLoved(${movie.id})">❤️ Love</button>
+                <button onclick="addLoved(${movie.movie_id})">❤️ Love</button>
             `
                     container.appendChild(div)
                 })
