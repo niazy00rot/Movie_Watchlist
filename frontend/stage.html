@@ -1,157 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Movies Leaderboard</title>
 
-<style>
-body {
-    font-family: Arial, sans-serif;
-    background: linear-gradient(135deg, #1e1e2f, #2a2a40);
-    color: #fff;
-    display: flex;
-    justify-content: center;
-    padding-top: 50px;
-    min-height: 100vh;
-}
-.container {
-    width: 100%;
-    max-width: 600px;
-    padding: 20px;
-}
-h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
-.stage {
-    background: #2a2a40;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-    margin-bottom: 20px;
-}
-.movie {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 15px;
-    margin-bottom: 10px;
-    background: #3a3a55;
-    border-radius: 8px;
-    transition: transform 0.2s;
-}
-.movie:hover {
-    transform: scale(1.02);
-}
-.rank {
-    font-weight: bold;
-    width: 30px;
-}
-button {
-    border: none;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    background: #6c63ff;
-    color: #fff;
-}
-button:hover {
-    background: #574fe0;
-}
-</style>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies Leaderboard</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            padding-top: 50px;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stage {
+            background: #2a2a40;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+
+        .movie {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: #3a3a55;
+            border-radius: 8px;
+            transition: transform 0.2s;
+        }
+
+        .movie:hover {
+            transform: scale(1.02);
+        }
+
+        .rank {
+            font-weight: bold;
+            width: 30px;
+        }
+
+        button {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #6c63ff;
+            color: #fff;
+        }
+
+        button:hover {
+            background: #574fe0;
+        }
+
+        .heart {
+            font-size: 18px;
+        }
+    </style>
 </head>
 
 <body>
-<div class="container">
-    <h1>❤️ Loved Movies</h1>
-    <div class="stage" id="lovedList"></div>
+    <div class="container">
+        <h1>❤️ Loved Movies</h1>
+        <div class="stage" id="lovedList"></div>
 
-    <h1>🎬 Movies List</h1>
-    <div class="stage" id="leaderboard"></div>
-</div>
+        <h1>🎬 Movies List</h1>
+        <div class="stage" id="leaderboard"></div>
+    </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    getMovies()
-})
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAll()
+        })
 
-function getLovedMovies(){
-    return JSON.parse(localStorage.getItem('lovedMovies')) || []
-}
+        function getToken() {
+            const token = localStorage.getItem('token')
+            if (!token) {
+                alert('Please login first')
+                throw new Error('No token found')
+            }
+            return token
+        }
 
-function saveLovedMovies(list){
-    localStorage.setItem('lovedMovies', JSON.stringify(list))
-}
+        async function loadAll() {
+            await getLovedMovies()
+            await getMovies()
+        }
 
-function toggleLove(movie){
-    let loved = getLovedMovies()
+        async function getLovedMovies() {
+            try {
+                const token = getToken()
 
-    const exists = loved.find(m => m.name === movie.name)
+                const res = await fetch('/movies/loved', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token }) // حسب تصميم الباك
+                })
 
-    if(exists){
-        loved = loved.filter(m => m.name !== movie.name)
-    } else {
-        loved.push(movie)
-    }
+                const data = await res.json()
+                renderLoved(data)
 
-    saveLovedMovies(loved)
-    renderLoved()
-    getMovies()
-}
+            } catch (err) {
+                console.error('Error fetching loved movies:', err)
+            }
+        }
 
-function renderLoved(){
-    const lovedContainer = document.getElementById('lovedList')
-    const loved = getLovedMovies()
-    lovedContainer.innerHTML = ''
+        async function getMovies() {
+            try {
+                const res = await fetch('/movies')
+                const data = await res.json()
 
-    loved.forEach((movie, index) => {
-        const div = document.createElement('div')
-        div.classList.add('movie')
+                const container = document.getElementById('leaderboard')
+                container.innerHTML = ''
 
-        div.innerHTML = `
+                data.forEach((movie, index) => {
+                    const div = document.createElement('div')
+                    div.classList.add('movie')
+
+                    div.innerHTML = `
+                <div class="rank">#${index + 1}</div>
+                <div>${movie.name || 'No Title'}</div>
+                <div>${movie.h + ':' + movie.m}</div>
+                <button onclick="addLoved(${movie.id})">❤️ Love</button>
+            `
+                    container.appendChild(div)
+                })
+
+            } catch (err) {
+                console.error('Error fetching movies:', err)
+            }
+        }
+
+        function renderLoved(lovedMovies) {
+            const lovedContainer = document.getElementById('lovedList')
+            lovedContainer.innerHTML = ''
+
+            if (!lovedMovies || lovedMovies.length === 0) {
+                lovedContainer.innerHTML = `<div class="movie">No loved movies yet ❤️</div>`
+                return
+            }
+
+            lovedMovies.forEach((movie, index) => {
+                const div = document.createElement('div')
+                div.classList.add('movie')
+
+                div.innerHTML = `
             <div class="rank">#${index + 1}</div>
             <div>${movie.name}</div>
             <div>${movie.h}:${movie.m}</div>
-            <button onclick='toggleLove(${JSON.stringify(movie)})'>💔 Remove</button>
+            <span class="heart">❤️</span>
         `
-        lovedContainer.appendChild(div)
-    })
-}
+                lovedContainer.appendChild(div)
+            })
+        }
 
-async function getMovies() {
-    try {
-        const res = await fetch('/movies')
-        const data = await res.json()
+        async function addLoved(movie_id) {
+            try {
+                const token = getToken()
 
-        const container = document.getElementById('leaderboard')
-        container.innerHTML = ''
+                const res = await fetch('/movies/loved', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, movie_id })
+                })
 
-        const loved = getLovedMovies()
+                if (!res.ok) {
+                    const msg = await res.text()
+                    throw new Error(msg)
+                }
 
-        data.forEach((movie, index) => {
-            const div = document.createElement('div')
-            div.classList.add('movie')
+                await loadAll()
 
-            const isLoved = loved.find(m => m.name === movie.name)
+            } catch (err) {
+                console.error('Error adding loved movie:', err)
+            }
+        }
+    </script>
 
-            div.innerHTML = `
-                <div class="rank">#${index + 1}</div>
-                <div>${movie.name || 'No Title'}</div>
-                <div>${movie.h+':'+movie.m || 'h'}</div>
-                <button onclick='toggleLove(${JSON.stringify(movie)})'>
-                    ${isLoved ? '💔 Remove' : '❤️ Love'}
-                </button>
-            `
-            container.appendChild(div)
-        })
-
-        renderLoved()
-
-    } catch (err) {
-        console.error('Error fetching movies:', err)
-    }
-}
-</script>
 </body>
+
 </html>
