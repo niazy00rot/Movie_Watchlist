@@ -6,6 +6,8 @@ app.use(express.json())
 app.use(express.static('./frontend'))
 const userRoutes = require('./routers/users.js')
 const rootRoutes = require('./routers/root.js')
+const moviesRoutes = require('./routers/movies.js')
+app.use('/movies', moviesRoutes)
 app.use('/', rootRoutes)
 app.use('/user', userRoutes)
 const port = 3001
