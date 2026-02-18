@@ -93,6 +93,8 @@
     </div>
 
     <script>
+        let lovedMoviesCache = []
+
         document.addEventListener('DOMContentLoaded', () => {
             loadAll()
         })
@@ -117,7 +119,7 @@
 
                 const res = await fetch('/movies/loved', {
                     method: 'GET',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
@@ -129,6 +131,7 @@
                 }
 
                 const data = await res.json()
+                lovedMoviesCache = data
                 renderLoved(data)
 
             } catch (err) {
@@ -144,11 +147,16 @@
                 const container = document.getElementById('leaderboard')
                 container.innerHTML = ''
 
-                data.forEach((movie, index) => {
+                const lovedIds = lovedMoviesCache.map(m => m.movie_id)
+
+                let rank = 1
+                data.forEach((movie) => {
+                    if (lovedIds.includes(movie.movie_id)) return
+
                     const div = document.createElement('div')
                     div.classList.add('movie')
                     div.innerHTML = `
-                        <div class="rank">#${index + 1}</div>
+                        <div class="rank">#${rank++}</div>
                         <div>${movie.name || 'No Title'}</div>
                         <div>${movie.h + ':' + movie.m}</div>
                         <button onclick="addLoved(${movie.movie_id})">❤️ Love</button>
@@ -190,7 +198,10 @@
 
                 const res = await fetch('/movies/loved', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ movie_id })
                 })
 
@@ -212,7 +223,10 @@
 
                 const res = await fetch('/movies/loved', {
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ movie_id })
                 })
 
@@ -230,4 +244,5 @@
     </script>
 
 </body>
+
 </html>
