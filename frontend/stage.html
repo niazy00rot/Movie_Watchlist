@@ -69,6 +69,14 @@
             background: #574fe0;
         }
 
+        .remove-btn {
+            background: #ff4d6d;
+        }
+
+        .remove-btn:hover {
+            background: #e63956;
+        }
+
         .heart {
             font-size: 18px;
         }
@@ -109,8 +117,16 @@
 
                 const res = await fetch('/movies/loved', {
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                 })
+
+                if (!res.ok) {
+                    const text = await res.text()
+                    throw new Error(text)
+                }
 
                 const data = await res.json()
                 renderLoved(data)
@@ -132,11 +148,11 @@
                     const div = document.createElement('div')
                     div.classList.add('movie')
                     div.innerHTML = `
-                <div class="rank">#${index + 1}</div>
-                <div>${movie.name || 'No Title'}</div>
-                <div>${movie.h + ':' + movie.m}</div>
-                <button onclick="addLoved(${movie.movie_id})">❤️ Love</button>
-            `
+                        <div class="rank">#${index + 1}</div>
+                        <div>${movie.name || 'No Title'}</div>
+                        <div>${movie.h + ':' + movie.m}</div>
+                        <button onclick="addLoved(${movie.movie_id})">❤️ Love</button>
+                    `
                     container.appendChild(div)
                 })
 
@@ -159,11 +175,11 @@
                 div.classList.add('movie')
 
                 div.innerHTML = `
-            <div class="rank">#${index + 1}</div>
-            <div>${movie.name}</div>
-            <div>${movie.h}:${movie.m}</div>
-            <span class="heart">❤️</span>
-        `
+                    <div class="rank">#${index + 1}</div>
+                    <div>${movie.name}</div>
+                    <div>${movie.h}:${movie.m}</div>
+                    <button class="remove-btn" onclick="removeLoved(${movie.movie_id})">💔 Remove</button>
+                `
                 lovedContainer.appendChild(div)
             })
         }
@@ -174,8 +190,8 @@
 
                 const res = await fetch('/movies/loved', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token, movie_id })
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ movie_id })
                 })
 
                 if (!res.ok) {
@@ -189,8 +205,29 @@
                 console.error('Error adding loved movie:', err)
             }
         }
+
+        async function removeLoved(movie_id) {
+            try {
+                const token = getToken()
+
+                const res = await fetch('/movies/loved', {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ movie_id })
+                })
+
+                if (!res.ok) {
+                    const msg = await res.text()
+                    throw new Error(msg)
+                }
+
+                await loadAll()
+
+            } catch (err) {
+                console.error('Error removing loved movie:', err)
+            }
+        }
     </script>
 
 </body>
-
 </html>

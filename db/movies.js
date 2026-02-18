@@ -37,7 +37,19 @@ async function add_loved(user_id,movie_id){
     finally{
         client.release()
     }
-
 }
 
-module.exports = {get_all_movies , get_loved_movies, add_loved}
+async function remove_loved(user_id,movie_id){
+    const client =await pool.connect()
+    try{
+        await pool.query('delete from loved_movies where user_id=$1 and movie_id=$2', [user_id, movie_id])
+    }
+    catch(err){
+        console.error("Error executing query", err.stack)
+    }
+    finally{
+        client.release()
+    }
+}
+
+module.exports = {get_all_movies , get_loved_movies, add_loved, remove_loved}

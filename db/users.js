@@ -27,8 +27,6 @@ catch(err){
 finally{    client.release()
 }}
 module.exports = {
-    create_user
-}
-module.exports = {
+    create_user,
     Login
 }

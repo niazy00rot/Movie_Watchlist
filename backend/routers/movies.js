@@ -1,6 +1,6 @@
 const router = require('express').Router()
 const jwt = require('jsonwebtoken')
-const {get_all_movies , get_loved_movies , add_loved} = require('../../db/movies')
+const {get_all_movies , get_loved_movies , add_loved , remove_loved} = require('../../db/movies')
 
 router.get('/', async (req,res)=>{
     try{
@@ -13,7 +13,11 @@ router.get('/', async (req,res)=>{
     }
 })
 router.get('/loved', async (req,res)=>{
-    const token = req.headers.authorization.split(' ')[1] 
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.includes(' ')) {
+        return res.status(401).json({error: "Missing or invalid authorization header"})
+    }
+    const token = authHeader.split(' ')[1] 
     try{
         const id = jwt.verify(token, process.env.JWT_SECRET).id
         const movie = await get_loved_movies(id)
@@ -25,7 +29,11 @@ router.get('/loved', async (req,res)=>{
     }
 })
 router.post('/loved',async(req,res)=>{
-    const token = req.body.token
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.includes(' ')) {
+        return res.status(401).json({error: "Missing or invalid authorization header"})
+    }
+    const token = authHeader.split(' ')[1]
     const movie_id = req.body.movie_id
     try{
         const id = jwt.verify(token, process.env.JWT_SECRET).id
@@ -37,4 +45,23 @@ router.post('/loved',async(req,res)=>{
         console.error("Error adding loved movie", err.stack)
     }
 } )
+
+router.delete('/loved', async(req,res)=>{
+    const authHeader = req.headers.authorization
+    if (!authHeader || !authHeader.includes(' ')) {
+        return res.status(401).json({error: "Missing or invalid authorization header"})
+    }
+    const token = authHeader.split(' ')[1]
+    const movie_id = req.body.movie_id
+    try{
+        const id = jwt.verify(token, process.env.JWT_SECRET).id
+        await remove_loved(id,movie_id)
+        res.status(200).json({message: "Movie removed from loved list"})
+    }
+    catch(err){
+        res.status(500).json({error: err.message})
+        console.error("Error removing loved movie", err.stack)
+    }
+})
+
 module.exports = router
